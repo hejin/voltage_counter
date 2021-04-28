@@ -8,50 +8,67 @@
 #include "stdlib.h"
 #include "string.h"
 #include "wdg.h"
-char *strx=0,*Readystrx,*Errstrx ; 	//返回值指针判断
-extern unsigned char  RxBuffer[500];
-extern unsigned int RxCounter;
+
+
+char *strx=0,*Readystrx,*Errstrx; 	//返回值指针判断
+
+extern unsigned char RxBuffer[500];
+extern unsigned int  RxCounter;
 extern unsigned char uart1_getok;
 extern unsigned char uart2_getok;
-extern char RxCounter1,RxBuffer1[100];
-extern unsigned char Timeout,restflag;
+extern unsigned char RxCounter1;
+extern unsigned char RxBuffer1[100];
+extern unsigned char Timeout;
+extern unsigned char restflag;
 
 extern volatile unsigned char uart3_getok;
-extern char RxCounter2,RxBuffer2[100];
+extern unsigned char RxCounter2;
+extern unsigned char RxBuffer2[100];
 
-
-void Uart1_SendStr(char*SendBuf)//串口1打印数据
+//向串口1打印数据
+void Uart1_SendStr(char *SendBuf)
 {
-    while(*SendBuf)
-    {
-        while((USART1->SR&0X40)==0);//等待发送完成
+    while (*SendBuf != '\0') {
+        while((USART1->SR&0x40) == 0)
+            ;//等待发送完成
+
         USART1->DR = (u8) *SendBuf;
         SendBuf++;
     }
 }
-void Clear_Buffer(void)//清空缓存
+
+
+//清空缓存
+void Clear_Buffer(void)
 {
     u8 i;
+
     Uart1_SendStr((char*)RxBuffer);
-    for(i=0; i<100; i++)
+
+    for(i = 0; i < 100; i++)
         RxBuffer[i]=0;//缓存
+
     RxCounter=0;
     IWDG_Feed();//喂狗
-
 }
 
 
-void Send_ATcmd(void)//发送AT指令给到模块，从串口1接收指令，串口2控制
+//发送AT指令给到模块，从串口1接收指令，串口2控制
+void Send_ATcmd(void)
 {
     char i;
-    for(i=0; i<RxCounter1; i++)
-    {
-        while((USART2->SR&0X40)==0) {} //等待发送完成
+    for(i = 0; i < RxCounter1; i++) {
+        while((USART2->SR&0x40)==0) {
+            ;
+        } //等待发送完成
+
         USART2->DR = RxBuffer1[i];
     }
 }
 
-void  OPEN_EC600S(void)//对EC600S进行开机
+
+//对EC600S进行开机
+void OPEN_EC600S(void)
 {
     printf("AT\r\n");
     delay_ms(300);
@@ -86,14 +103,17 @@ void  OPEN_EC600S(void)//对EC600S进行开机
     IWDG_Feed();//喂狗
 }
 
-
+//发送读取电压值的命令
 void Send_VoltCounterReadCmd(void)
 {
     const char *cmdstr_for_chann_1 = "YSR1\n";
     char i;
     for(i = 0; i < strlen(cmdstr_for_chann_1); i++)
     {
-        while ((USART3->SR&0X40) == 0) {} //等待发送完成
+        while ((USART3->SR&0X40) == 0) {
+            ;
+        } //等待发送完成
+
         USART3->DR = cmdstr_for_chann_1[i];
     }
 }
@@ -105,16 +125,20 @@ int main(void)
 {
     u16 wait_count = 0;
     u16 ready_to_sendcmd = 1;
-    delay_init();	    	 //延时函数初始化
-    NVIC_Configuration(); 	 //设置NVIC中断分组2:2位抢占优先级，2位响应优先级
-    LED_Init();		  		//初始化与LED连接的硬件接口
-    EC600SCTR_Init();        //初始化EC200U的PWR引脚
-    uart_init(115200);//串口1初始化，可连接PC进行打印模块返回数据
+    char msg[128] = { 0 };
+
+    delay_init();             //延时函数初始化
+    NVIC_Configuration();     //设置NVIC中断分组2:2位抢占优先级，2位响应优先级
+    LED_Init();               //初始化与LED连接的硬件接口
+    EC600SCTR_Init();         //初始化EC200U的PWR引脚
+
+    uart_init(115200);        //串口1初始化，可连接PC进行打印模块返回数据
     Uart1_SendStr("hello, world!\r\n");
-    //uart2_init(115200);//初始化和GPRS连接串口
+
     uart3_init(115200);
-    IWDG_Init(7,625);    //8S一次
-    //OPEN_EC600S();//对EC600S开机
+    IWDG_Init(7, 625);        //8S一次
+    //OPEN_EC600S();          //对EC600S开机
+
     while(1)
     {
 #if 0
@@ -134,26 +158,36 @@ int main(void)
 
         }
 #endif
-        if (ready_to_sendcmd && wait_count ++ == 10) {
+        ++wait_count;
+        if (wait_count % 5 == 0)
+             ready_to_sendcmd = 1;
+
+        if (ready_to_sendcmd && (wait_count % 5 == 0)) {
             Send_VoltCounterReadCmd();
-            Uart1_SendStr("waiting to retrieve counter from channel#1 ... \r\n");
-            wait_count       = 0;
+            Uart1_SendStr("ReadCMD sent. waiting for reply from channel#1 ... \r\n");
+
             ready_to_sendcmd = 0;
         }
 
+				delay_ms(100);//wait and check
         if (uart3_getok) {
             int i;
+
             Uart1_SendStr("successfully got voltage counter from channel#1 : \r\n");
             for(i = 0; i < RxCounter2; i++)
                 UART1_send_byte(RxBuffer2[i]);
             RxCounter2       = 0;
             uart3_getok      = 0;
             ready_to_sendcmd = 1;
+            wait_count       = 0;
         }
 
-        //while (sleep_count ++ < 10)
-        delay_ms(500);
-        //Uart1_SendStr("wakeup ... Wow\r\n");
+
+        delay_ms(1000);
+
+        sprintf(msg, "wakeup ...ready_to_sendcmd = %d wait_count=%d\r\n",
+                ready_to_sendcmd, wait_count);
+        Uart1_SendStr(msg);
 
         IWDG_Feed();//喂狗
     }
