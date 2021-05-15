@@ -238,7 +238,7 @@ void USART3_IRQHandler(void)                	//串口3中断服务程序
 {
 
     char Res;
-    if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)  //接收模块返回的数据
+    if (USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)  //接收模块返回的数据
     {
         RxBuffer2[RxCounter2++] =USART_ReceiveData(USART3);//接收模块的数据
 
@@ -247,9 +247,9 @@ void USART3_IRQHandler(void)                	//串口3中断服务程序
         if (Res == 0x0a) {
             uart3_getok = 1;
         }
-        UART1_send_byte(Res);
-
+        //UART1_send_byte(Res);
     }
+
     if(USART_GetITStatus(USART3, USART_IT_IDLE) != RESET)  //接收完成
     {
         Res=USART_ReceiveData(USART3);//接收模块的数据;

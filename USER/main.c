@@ -25,6 +25,8 @@ extern volatile unsigned char uart3_getok;
 extern unsigned char RxCounter2;
 extern unsigned char RxBuffer2[100];
 
+unsigned int chann = 1; //the channel to read voltage
+
 //向串口1打印数据
 void Uart1_SendStr(char *SendBuf)
 {
@@ -106,8 +108,14 @@ void OPEN_EC600S(void)
 //发送读取电压值的命令
 void Send_VoltCounterReadCmd(void)
 {
-    const char *cmdstr_for_chann_1 = "YSR1\n";
+    const char *cmdstr_for_chann_1;
     char i;
+
+    if (chann == 0)
+        cmdstr_for_chann_1 = "YSR1\n";
+    else
+        cmdstr_for_chann_1 = "YSR2\n";
+
     for(i = 0; i < strlen(cmdstr_for_chann_1); i++)
     {
         while ((USART3->SR&0X40) == 0) {
@@ -164,22 +172,32 @@ int main(void)
 
         if (ready_to_sendcmd && (wait_count % 5 == 0)) {
             Send_VoltCounterReadCmd();
-            Uart1_SendStr("ReadCMD sent. waiting for reply from channel#1 ... \r\n");
+            Uart1_SendStr("ReadCMD sent. waiting for reply from channel");
+            if (chann == 0)
+                Uart1_SendStr(" ##1 ...\r\n");
+            else
+                Uart1_SendStr(" ##2 ...\r\n");
 
             ready_to_sendcmd = 0;
         }
 
-				delay_ms(100);//wait and check
+        delay_ms(100);//wait and check
         if (uart3_getok) {
             int i;
 
-            Uart1_SendStr("successfully got voltage counter from channel#1 : \r\n");
+            Uart1_SendStr("successfully got voltage counter from channel");
+            if (chann == 0)
+                Uart1_SendStr(" ##1 ...\r\n");
+            else
+                Uart1_SendStr(" ##2 ...\r\n");
+
             for(i = 0; i < RxCounter2; i++)
                 UART1_send_byte(RxBuffer2[i]);
             RxCounter2       = 0;
             uart3_getok      = 0;
             ready_to_sendcmd = 1;
             wait_count       = 0;
+            chann            = 1 - chann;
         }
 
 
