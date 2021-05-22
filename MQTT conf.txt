@@ -1,0 +1,4 @@
+mqtt.filesystems.io
+username : base_000
+password: iBATERRY668$
+topic: testtopic0

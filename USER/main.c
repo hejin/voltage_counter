@@ -8,6 +8,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "wdg.h"
+#include "EC600S.h"
 
 
 char *strx=0,*Readystrx,*Errstrx; 	//返回值指针判断
@@ -129,7 +130,7 @@ void Send_VoltCounterReadCmd(void)
 //此代码实现的功能是将STM32作为一个搬运工，信使，串口1发数据给单片机
 //单片机把数据发给串口2，串口2发给BC20,BC20反馈给串口2，串口1再通过
 //STM32发给串口1进行打印。使用起来仿佛是直接串口1控制模块一个感受！
-int main(void)
+int main22(void)
 {
     u16 wait_count = 0;
     u16 ready_to_sendcmd = 1;
@@ -215,4 +216,47 @@ int main(void)
 
 
 
+int main(void)
+{
+    char sendstr[]="How are you, Hua? Greetings!";//输入自己需要发送的英文短信内容即可
+    char phone[12]="13601149321";//输入自己的手机号码即可
+    char sms[64];
+    int i = 0;
 
+
+    delay_init();            //延时函数初始化
+    NVIC_Configuration();    //设置NVIC中断分组2:2位抢占优先级，2位响应优先级
+    LED_Init();              //初始化与LED连接的硬件接口
+    uart_init(115200);       //串口1初始化，接电脑端打印调试信息
+    uart2_init(115200);      //串口2初始化，对接EC600S模块
+    delay_ms(500);
+    PWRKEY=1;//模块开机
+    EC600S_Init(); //EC600S初始化
+    Uart1_SendStr("hello, world! from MCU\r\n");
+
+    //Send_Text(phone, sendstr);//短信发送
+    sprintf(sms, "SMS from MCU: %d\n\n", ++i);
+    Uart1_SendStr(sms);
+//  printf("AT+QMTCFG=?\r\n");delay_ms(1000);
+
+    printf("AT+QMTCFG=\"recv/mode\",0,0\r\n");delay_ms(1000);
+
+    printf("AT+QMTOPEN=0,\"mqtt.filesystems.io\",1883\r\n"); delay_ms(1000);
+
+    printf("AT+QMTCONN=0,\"someclientID\",\"base_000\",\"iBATERRY668$\"\r\n"); delay_ms(10000);
+
+    printf("AT+QMTPUBEX=0,0,0,0,\"testtopic0\",30\r\n");delay_ms(1000);
+    printf("This is test data, hello MQTT.\r\n");delay_ms(1000);
+
+    printf("AT+QMTCLOSE=0\r\n"); delay_ms(1000);
+
+    printf("AT+QMTDISC=0\r\n"); delay_ms(1000);
+
+
+    Uart1_SendStr("MQTT Done\r\n");
+    while(1)
+    {
+        delay_ms(1000);
+        Clear_Buffer();
+    }
+}

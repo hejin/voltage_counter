@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\HARDWARE\LED;..\HARDWARE\WDG;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\HARDWARE\TIMER</IncludePath>
+              <IncludePath>..\CORE;..\HARDWARE\LED;..\HARDWARE\WDG;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\HARDWARE\TIMER;..\HARDWARE\EC600S</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -572,6 +572,16 @@
               <FileName>wdg.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\WDG\wdg.c</FilePath>
+            </File>
+            <File>
+              <FileName>EC600S.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\EC600S\EC600S.c</FilePath>
+            </File>
+            <File>
+              <FileName>EC600S.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HARDWARE\EC600S\EC600S.h</FilePath>
             </File>
           </Files>
         </Group>
