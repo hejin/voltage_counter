@@ -1,4 +1,14 @@
-mqtt.filesystems.io
+#mqtt.filesystems.io
+#port: 1883
+#username : base_000
+#password: iBATERRY668$
+#topic: testtopic0
+
+
+SSL:
+MQTTS://mqtt.softxtream.app
+port: 8883
+
 username : base_000
 password: iBATERRY668$
 topic: testtopic0
