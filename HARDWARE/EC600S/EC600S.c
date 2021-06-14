@@ -115,5 +115,28 @@ void  MQTT_Init(void)
     Clear_Buffer();
 }
 
-
+void Send_SMS(char *phone,char *data)//发送短信
+{
+    char *strx=0; 	//返回值指针判断
+    printf("AT+CMGF=1\r\n");//设置文本模式
+    delay_ms(500);
+    printf("AT+CSCS=\042GSM\042\r\n");   //设置TE字符集
+    delay_ms(500);
+    printf("AT+CMGS=\"");
+    printf(phone);//输入手机号码
+    printf("\"\r\n");
+    delay_ms(500);
+    printf (data);//文本内容
+    Clear_Buffer();	//清除上面的内容
+    while((USART2->SR&0X40)==0);//
+    USART2->DR = 0X1A;   //发送结束符
+    delay_ms(500);
+    while(1)
+    {
+        strx=strstr((const char*)RxBuffer,(const char*)"+CMGS");//返回CMGS表明短信发送成功
+        if(strx)
+            break;//跳出
+    }
+    Clear_Buffer();	//清除上面的内容
+}
 

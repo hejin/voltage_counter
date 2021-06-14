@@ -6,5 +6,6 @@ void Clear_Buffer(void);//清空缓存
 void  EC600S_Init(void);//EC600S初始化
 void Send_Str(char*data);//发送数据
 void  MQTT_Init(void);
+void Send_SMS(char *phone,char *data);//发送短信
 #endif
 
