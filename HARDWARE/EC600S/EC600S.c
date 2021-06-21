@@ -11,15 +11,19 @@ extern char RxBuffer[100];
 extern char RxCounter;
 
 
-
 void  EC600S_Init(void)
 {
     char *strx = NULL, *extstrx; 	//返回值指针判断
 
+    Uart1_SendStr("Init EC600S ... \r\n");
+
     printf("AT\r\n");
     delay_ms(500);
+
     printf("AT\r\n");
     delay_ms(500);
+
+
     strx=strstr((const char*)RxBuffer,(const char*)"OK");//返回OK
     while(strx==NULL)
     {
@@ -28,6 +32,7 @@ void  EC600S_Init(void)
         delay_ms(500);
         strx=strstr((const char*)RxBuffer,(const char*)"OK");//返回OK
     }
+
     printf("ATE0\r\n"); //关闭回显
     delay_ms(500);
     Clear_Buffer();

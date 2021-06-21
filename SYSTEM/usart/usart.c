@@ -62,6 +62,8 @@ unsigned char RxCounter2,RxBuffer2[255];     //接收缓冲,最大USART_REC_LEN个字节.
 //bit13~0，	接收到的有效字节数目
 u16 USART_RX_STA=0;       //接收状态标记
 extern u8 Timeout;
+
+
 //初始化IO 串口1
 //bound:波特率
 void uart_init(u32 bound) {

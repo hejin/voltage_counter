@@ -41,6 +41,7 @@ void Uart1_SendStr(char *SendBuf)
 }
 
 
+
 //清空缓存
 void Clear_Buffer(void)
 {
@@ -53,20 +54,6 @@ void Clear_Buffer(void)
 
     RxCounter=0;
     IWDG_Feed();//喂狗
-}
-
-
-//发送AT指令给到模块，从串口1接收指令，串口2控制
-void Send_ATcmd(void)
-{
-    char i;
-    for(i = 0; i < RxCounter1; i++) {
-        while((USART2->SR&0x40)==0) {
-            ;
-        } //等待发送完成
-
-        USART2->DR = RxBuffer1[i];
-    }
 }
 
 
@@ -150,23 +137,7 @@ int main_voltage(void)
 
     while(1)
     {
-#if 0
-        if(uart1_getok)
-        {
-            Send_ATcmd();
-            uart1_getok=0;
-            RxCounter1=0;
 
-        }
-        if(uart2_getok)
-        {
-            for(i=0; i<RxCounter; i++)
-                UART1_send_byte(RxBuffer[i]);
-            RxCounter=0;
-            uart2_getok=0;
-
-        }
-#endif
         ++wait_count;
         if (wait_count % 5 == 0)
              ready_to_sendcmd = 1;
@@ -214,7 +185,6 @@ int main_voltage(void)
 
 int main_sms(void)
 {
-    char  *strx;
     u8 sendstr[]="EC600S Send English Text!";//输入自己需要发送的英文短信内容即可
     u8 phone[11]="13601149321";//输入自己的手机号码即可
     delay_init();           //延时函数初始化
@@ -225,7 +195,7 @@ int main_sms(void)
     delay_ms(500);
     PWRKEY=1;//模块开机
     EC600S_Init(); //EC600S初始化
-    Send_SMS(phone,sendstr);//短信发送
+    Send_SMS(phone, sendstr);//短信发送
     Uart1_SendStr("hello, world! This is from my MCU\r\n");
     while(1)
     {
@@ -282,15 +252,105 @@ int main_mqtt(void)
     }
 }
 
+//MQTTS  串口输出大概是:
+/*
+[16:30:42.532]???Init EC600S ... 
 
+[16:30:44.029]???
+OK
 
+OK
+
+OK
+
+[16:30:45.028]???
++CSQ: 31,99
+
+OK
+
++CPIN: READY
+
+OK
+
+[16:30:46.042]???
+OK
+
++QMTCLOSE: 0,0
+
++CREG: 0,1
+
+OK
+
+[16:30:46.541]???
++CGREG: 0,1
+
+OK
+
+[16:30:47.056]???
+ERROR
+
+[16:30:47.555]???
++QIACT: 1,1,1,"10.2.198.114","240E:404:2500:9D0E:168A:86BE:913C:1849"
+
+OK
+Start to sending SMS
+
+[16:30:55.269]???MQTTS Done
+
+[16:30:56.271]???MQTTS
+
++QMTCFG: "version",(0-5),(3,4)
++QMTCFG: "pdpcid",(0-5),(1-15)
++QMTCFG: "ssl",(0-5),(0,1),(0-5)
++QMTCFG: "keepalive",(0-5),(0-3600)
++QMTCFG: "session",(0-5),(0,1)
++QMTCFG: "timeout",(0-5),(1-1200),(1-10),(0,1)
++QMTCFG: "will",(0-5),(0,1),(0-2),(0,1),"willtopic","willmessage"
++QMTCFG: "willex",(0-5),(0,1),(0-2),(0,1),"willtopic",(0-256)
++QMTCFG: "recv/mode",(0-5),(0,1),(0,1)
++QMTCFG: "send/mode",(0-5),(0,1)
++QMTCFG: "onenet",(0-5),"product id","access key"
++QMTCFG: "aliauth",(0-5),"product key","device name","device secret"
++QMTCFG: "hwauth",(0-5),"device id","device secret"
++QMTCFG: "hwprodid",(0-5),"product id","product secret","nodeid"
++QMTCFG: "qmtping",(0-5),(5-60)
++QMTCFG: "dataformat",(0-5),(0,1),(0,1)
++QMTCFG: "view/mode",(0-5),(0,1)
++QMTCFG: "CTWing",(0-5),"client_id","feature_string"
++QMTCFG: "edit/timeout",(0-5),(0,1),(1-180)
+
+OK
+
+OK
+
+OK
+
+OK
+
++QMTOPEN: 0,0
+
+OK
+
++QMTCONN: 0,0,0
+
+> 
+OK
+
++QMTPUBEX: 0,0,0
+
+OK
+
++QMTDISC: 0,0
+
+[16:30:57.366]???MQTTS
+
+[16:30:58.366]???MQTTS
+*/
 int main(void)
 {
-    char sendstr[]="How are you, Hua? Happy Dragon Boat!";//输入自己需要发送的英文短信内容即可
-    char phone[11]="13601149321";//输入自己的手机号码即可
-    char sms[64];
+    u8 sendstr[]="How are you, Hua? Happy Dragon Boat!";//输入自己需要发送的英文短信内容即可
+    u8 phone[11]="13601149321";//输入自己的手机号码即可
     int i = 0;
-
 
     delay_init();            //延时函数初始化
     NVIC_Configuration();    //设置NVIC中断分组2:2位抢占优先级，2位响应优先级
@@ -298,33 +358,31 @@ int main(void)
     uart_init(115200);       //串口1初始化，接电脑端打印调试信息
     uart2_init(115200);      //串口2初始化，对接EC600S模块
     delay_ms(500);
-
-
-    Uart1_SendStr("hello, world! from MCU. Let's MQTTS\r\n");
     PWRKEY=1;//模块开机
     EC600S_Init(); //EC600S初始化
 
     Uart1_SendStr("Start to sending SMS\r\n");
-    Send_SMS(phone, sendstr);//短信发送
-    sprintf(sms, "SMS sent from MCU: %d\n\n", ++i);
-    Uart1_SendStr(sms);
-/*
-//  printf("AT+QMTCFG=?\r\n");delay_ms(1000);
+//    Send_SMS(phone, sendstr);//短信发送
 
-    printf("AT+QMTCFG=\"recv/mode\",0,0\r\n");delay_ms(1000);
 
-    printf("AT+QMTOPEN=0,\"mqtt.filesystems.io\",1883\r\n"); delay_ms(1000);
+    printf("AT+QMTCFG=?\r\n");delay_ms(1000);
+
+    printf("AT+QMTCFG=\"recv/mode\",0,0,1\r\n");delay_ms(1000);
+
+    printf("AT+QMTCFG=\"SSL\",0,1,2\r\n");delay_ms(1000);
+
+    printf("AT+QMTOPEN=0,\"mqtt.softxtream.app\",8883\r\n"); delay_ms(1000);
 
     printf("AT+QMTCONN=0,\"someclientID\",\"base_000\",\"iBATERRY668$\"\r\n"); delay_ms(10000);
 
     printf("AT+QMTPUBEX=0,0,0,0,\"testtopic0\",30\r\n");delay_ms(1000);
-    printf("This is test data, hello MQTT.\r\n");delay_ms(1000);
+    printf("This is test data, from MQTTS.\r\n");delay_ms(1000);
 
-    printf("AT+QMTCLOSE=0\r\n"); delay_ms(1000);
+//    printf("AT+QMTCLOSE=0\r\n"); delay_ms(1000);
 
     printf("AT+QMTDISC=0\r\n"); delay_ms(1000);
 
-*/
+
     Uart1_SendStr("MQTTS Done\r\n");
     while(1)
     {
