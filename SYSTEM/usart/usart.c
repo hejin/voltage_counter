@@ -3,6 +3,9 @@
 #include "stdio.h"
 #include "string.h"
 #include "stm32f10x_tim.h"
+#include "wdg.h"
+
+
 unsigned char uart1_getok;
 unsigned char uart2_getok;
 volatile unsigned char uart3_getok;
@@ -32,6 +35,7 @@ int fputc(int ch, FILE *f)
 }
 #endif
 
+
 void UART1_send_byte(char data)
 {
     while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
@@ -51,10 +55,16 @@ void UART3_send_byte(char data)
 
 //串口1中断服务程序
 //注意,读取USARTx->SR能避免莫名其妙的错误
-unsigned int RxCounter;
-unsigned char RxBuffer[500];     //接收缓冲,
-unsigned char RxCounter1,RxBuffer1[255];     //接收缓冲,最大USART_REC_LEN个字节.
-unsigned char RxCounter2,RxBuffer2[255];     //接收缓冲,最大USART_REC_LEN个字节.
+unsigned char RxCounter1;
+unsigned char RxBuffer1[255];     //接收缓冲,最大USART_REC_LEN个字节.
+
+//串口2
+unsigned int  RxCounter2;
+unsigned char RxBuffer2[500];     //接收缓冲,
+
+//串口3
+unsigned char RxCounter3;
+unsigned char RxBuffer3[255];     //接收缓冲,最大USART_REC_LEN个字节.
 
 //接收状态
 //bit15，	接收完成标志
@@ -221,7 +231,7 @@ void USART2_IRQHandler(void)                	//串口2中断服务程序
     char Res;
     if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)  //接收模块返回的数据
     {
-        RxBuffer[RxCounter++] =USART_ReceiveData(USART2);//接收模块的数据
+        RxBuffer2[RxCounter2++] =USART_ReceiveData(USART2);//接收模块的数据
 
         Res=USART_ReceiveData(USART2);//接收模块的数据;
         //  UART1_send_byte(Res);
@@ -242,7 +252,7 @@ void USART3_IRQHandler(void)                	//串口3中断服务程序
     char Res;
     if (USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)  //接收模块返回的数据
     {
-        RxBuffer2[RxCounter2++] =USART_ReceiveData(USART3);//接收模块的数据
+        RxBuffer3[RxCounter3++] =USART_ReceiveData(USART3);//接收模块的数据
 
         Res=USART_ReceiveData(USART3);//接收模块的数据;
 
@@ -257,8 +267,41 @@ void USART3_IRQHandler(void)                	//串口3中断服务程序
         Res=USART_ReceiveData(USART3);//接收模块的数据;
         uart3_getok=1;
     }
-
-
 }
 
+//为串口1清空缓存
+void Clear_Buffer1(void)
+{
+    u8 i;
+
+    for(i = 0; i < 255; i++)
+        RxBuffer1[i]=0;//缓存
+
+    RxCounter1=0;
+    IWDG_Feed();//喂狗
+}
+
+//为串口2清空缓存
+void Clear_Buffer2(void)
+{
+    u8 i;
+
+    for(i = 0; i < 255; i++)
+        RxBuffer2[i]=0;//缓存
+
+    RxCounter2=0;
+    IWDG_Feed();//喂狗
+}
+
+//为串口3清空缓存
+void Clear_Buffer3(void)
+{
+    u8 i;
+
+    for(i = 0; i < 255; i++)
+        RxBuffer3[i]=0;//缓存
+
+    RxCounter3=0;
+    IWDG_Feed();//喂狗
+}
 

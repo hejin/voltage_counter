@@ -9,6 +9,11 @@ void uart3_init(u32 bound);
 void UART1_send_byte(char data);
 void UART2_send_byte(char data);
 
+void Clear_Buffer1(void);
+void Clear_Buffer2(void);
+void Clear_Buffer3(void);
+
+
 #endif
 
 
