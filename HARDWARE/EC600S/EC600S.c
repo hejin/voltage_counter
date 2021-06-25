@@ -24,7 +24,7 @@ void  EC600S_Init(void)
     printf("AT\r\n");
     delay_ms(500);
 
-return;
+    //return;
 
     strx=strstr((const char*)RxBuffer2,(const char*)"OK");//·µ»ØOK
     while(strx==NULL)
