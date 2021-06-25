@@ -36,18 +36,6 @@ struct vol_data
 
 static struct vol_data vd = { 0 };
 
-//向串口1打印数据
-void Uart1_SendStr(char *SendBuf)
-{
-    while (*SendBuf != '\0') {
-        while((USART1->SR&0x40) == 0)
-            ;//等待发送完成
-
-        USART1->DR = (u8) *SendBuf;
-        SendBuf++;
-    }
-}
-
 
 
 //问题还没有解决：如何获得timestamp
@@ -183,11 +171,6 @@ int send_sms(void)
 
     Send_SMS(phone, sendstr);//短信发送
     Uart1_SendStr("hello, world! This is from my MCU\r\n");
-    while(1)
-    {
-        delay_ms(500);
-        Clear_Buffer3();
-    }
 }
 
 
@@ -214,11 +197,7 @@ int mqtt(void)
 
 
     Uart1_SendStr("MQTT Done\r\n");
-    while(1)
-    {
-        delay_ms(1000);
-        Clear_Buffer3();
-    }
+
 }
 
 //MQTTS  串口输出大概是:
@@ -315,30 +294,45 @@ OK
 
 [16:30:58.366]???MQTTS
 */
-int mqtts(char *mqtt_msg, int len)
+int mqtts_init()
 {
 
     Uart1_SendStr("Start to sending msg\r\n");
 
-    printf("AT+QMTCFG=?\r\n");delay_ms(1000);
+    printf("AT+QMTCFG=?\r\n");delay_ms(1000); Clear_Buffer2();
 
-    printf("AT+QMTCFG=\"recv/mode\",0,0,1\r\n");delay_ms(1000);
+    printf("AT+QMTCFG=\"recv/mode\",0,0,1\r\n");delay_ms(1000);Clear_Buffer2();
 
-    printf("AT+QMTCFG=\"SSL\",0,1,2\r\n");delay_ms(1000);
+    printf("AT+QMTCFG=\"SSL\",0,1,2\r\n");delay_ms(1000);Clear_Buffer2();
 
-    printf("AT+QMTOPEN=0,\"mqtt.softxtream.app\",8883\r\n"); delay_ms(1500);
+    printf("AT+QMTOPEN=0,\"mqtt.softxtream.app\",8883\r\n"); delay_ms(1500);Clear_Buffer2();
 
-    printf("AT+QMTCONN=0,\"someclientID\",\"base_000\",\"iBATERRY668$\"\r\n"); delay_ms(1500);
+    printf("AT+QMTCONN=0,\"someclientID\",\"base_000\",\"iBATERRY668$\"\r\n"); delay_ms(1500);Clear_Buffer2();
 
+    Uart1_SendStr("MQTTS Init Done\r\n");
+    return 0;
+}
+
+int mqtts_pub(char *mqtt_msg, int len)
+{
+    Uart1_SendStr("MQTTS pub Started\r\n");
     printf("AT+QMTPUBEX=0,0,0,0,\"testtopic0\",%u\r\n", len);delay_ms(1000);
     printf("%s", mqtt_msg);delay_ms(1000);
+    Clear_Buffer2();
+    Uart1_SendStr("MQTTS pub Done\r\n");
+    return 0;
+}
+
+int mqtts_disc()
+{
+    Uart1_SendStr("MQTTS Disc\r\n");
 
     printf("AT+QMTDISC=0\r\n"); delay_ms(1000);
 
-
-    Uart1_SendStr("MQTTS Done\r\n");
+    Uart1_SendStr("MQTTS Disc Done\r\n");
     return 0;
 }
+
 
 enum {
     MTQQ_MSG_LEN = 256
@@ -350,9 +344,11 @@ int main()
     int sec = 0;
     int len;
     char msg[512];
+    int ts = 12340000;
 
     system_init();
-//    send_sms();
+    send_sms();
+    mqtts_init();
     get_voltage();
     get_voltage();
     get_voltage();
@@ -362,11 +358,11 @@ int main()
         memset(mtqq_msg_json, 0, MTQQ_MSG_LEN);
         len = snprintf(mtqq_msg_json, MTQQ_MSG_LEN - 1, 
                        "{ \"ts\":\"%u\", \"b0\":\"%s\", \"b1\":\"%s\" }\r\n", 
-                       987654321, vd.b0, vd.b1);
+                       ++ts, vd.b0, vd.b1);
         sprintf(msg, "msg=%s len=%u", mtqq_msg_json, len);
         Uart1_SendStr(msg);
-        mqtts(mtqq_msg_json, len);
-        while(sec ++ < 100) {
+        mqtts_pub(mtqq_msg_json, len);
+        while(sec ++ < 60) {
             delay_ms(1000);
             sprintf(msg, "%u\r\n", sec);
             Uart1_SendStr(msg);

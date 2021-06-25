@@ -269,6 +269,19 @@ void USART3_IRQHandler(void)                	//串口3中断服务程序
     }
 }
 
+//向串口1打印数据
+void Uart1_SendStr(char *SendBuf)
+{
+    while (*SendBuf != '\0') {
+        while((USART1->SR&0x40) == 0)
+            ;//等待发送完成
+
+        USART1->DR = (u8) *SendBuf;
+        SendBuf++;
+    }
+}
+
+
 //为串口1清空缓存
 void Clear_Buffer1(void)
 {
@@ -285,7 +298,7 @@ void Clear_Buffer1(void)
 void Clear_Buffer2(void)
 {
     u8 i;
-
+   Uart1_SendStr(RxBuffer2);
     for(i = 0; i < 255; i++)
         RxBuffer2[i]=0;//缓存
 

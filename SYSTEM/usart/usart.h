@@ -13,6 +13,7 @@ void Clear_Buffer1(void);
 void Clear_Buffer2(void);
 void Clear_Buffer3(void);
 
+void Uart1_SendStr(char *SendBuf);
 
 #endif
 
